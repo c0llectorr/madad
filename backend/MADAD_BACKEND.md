@@ -60,7 +60,7 @@ backend/
 │   ├── test_prioritization.py
 │   ├── test_routing.py
 │   └── test_replanning.py
-├── requirements.txt
+├── requirements.txt                # exact pinned versions in API_CONTRACT.md — copy from there, don't freelance
 ├── .env.example
 └── run.sh                          # `uvicorn app.main:app --reload --port 8000`
 ```
@@ -85,10 +85,12 @@ This is the exact abstraction that lets you build the whole MVP against Qwen, th
 
 ---
 
-## 2. API Contract (identical copy lives in `MADAD_FRONTEND.md` and `docs/API_CONTRACT.md` — all three must always match)
+## 2. API Contract
+
+**The full authoritative spec — every field, type, status code, and error response — lives in `API_CONTRACT.md` at the repo root.** This section covers implementation-specific detail (extraction logic, corner cases, transaction rules) that builds on top of that contract; it does not restate it. If you change a response shape while building, update `API_CONTRACT.md` in the same commit, not after.
 
 Base URL: `http://<backend-host>:8000/api`
-Auth: every request after login includes header `Authorization: Bearer <token>`
+Auth: every request after login includes header `Authorization: Bearer <token>`. Token expiry is configured via `JWT_EXPIRY_MINUTES` in `.env` — **agree this number with Abdullah before either of you writes auth-handling code**, since the frontend's session-refresh behavior (see `MADAD_FRONTEND.md` Section 2) depends on knowing this value.
 
 ### Auth
 ```
@@ -222,7 +224,11 @@ Response: { "dispatch_id": 9, "status": "delivered" }
 `POST /api/reports` with `raw_text` only → row inserted with `status='pending_extraction'`. No AI call yet. This is your very first working endpoint — get this deployed and callable before touching anything else, so Abdullah can start integrating against a real (if minimal) API on day one instead of waiting on you.
 
 **Story 2 — As the backend, I can accept a structured-form report and skip extraction entirely.**
-Same endpoint, but when `structured_fields` is present, immediately create a `confirmed` site record, no extraction call. Corner case handled here already (see API contract above).
+Same endpoint, but when `structured_fields` is present, immediately create a `confirmed` site record, no extraction call.
+
+**Explicit field mapping — this is the one place two field names must be reconciled, don't let it get lost:** the request body's `structured_fields.headcount` maps directly to `sites.estimated_population` on insert. These are deliberately different names at the API boundary (`headcount` is what a human fills into a form; `estimated_population` is the canonical stored field used everywhere downstream — extraction, prioritization, the sites list) but they are the same value. Write this mapping as a single explicit line in `routes/reports.py`, e.g. `estimated_population = structured_fields["headcount"]` — don't let it get inferred implicitly.
+
+**`structured_fields.severity` handling:** store it directly on `sites.severity` (nullable column — see `MADAD_DATABASE.md`). This field is populated **only** via this manual-entry fast path, never by AI extraction — the model never assigns severity, a human coordinator does, consistent with the extraction-never-decides principle governing every other story here. It feeds into `priority_score()` (Story 5) as an additional weight.
 
 **Story 3 — As the backend, I can extract structured data from free text via Qwen.**
 Implement `QwenProvider.extract()`, wire it to `/api/reports/{id}/extract`. This is where the function-calling tool schema lives:
@@ -261,6 +267,8 @@ def priority_score(site: dict, now: datetime) -> float:
     urgency_weights = {"injury_reported": 50, "pregnancy": 40, "water_rising": 30,
                         "stranded_no_exit": 30, "elderly_present": 15, "children_present": 15}
     score += sum(urgency_weights.get(f, 0) for f in site["urgency_flags"])
+    severity_weights = {"critical": 50, "high": 30, "medium": 10, "low": 0}
+    score += severity_weights.get(site.get("severity"), 0)   # .get() — severity is nullable, AI-extracted sites won't have it
     score += 10 if site["confidence"] == "corroborated" else 0
     hours_since_report = (now - site["last_report_time"]).total_seconds() / 3600
     score += hours_since_report * 5
@@ -268,17 +276,58 @@ def priority_score(site: dict, now: datetime) -> float:
 ```
 Write `tests/test_prioritization.py` against this before moving on — it's the easiest thing in the whole system to verify correctness of, and the one judges are most likely to ask you to explain live.
 
+**Reasoning string template — fixed format, do not let this be freestyled per-call:** every allocation's `reasoning` field must be generated as:
+```python
+def format_reasoning(site: dict) -> str:
+    parts = [f"population {site['estimated_population']}"]
+    if site["urgency_flags"]:
+        parts.append(f"flags: {', '.join(site['urgency_flags'])}")
+    if site.get("severity"):
+        parts.append(f"severity: {site['severity']}")
+    return f"Priority score {site['priority_score']:.0f}: " + ", ".join(parts)
+```
+This exact, fixed format is what the frontend's `AllocationPlanScreen` is built to display — an inconsistent or freeform reasoning string on any given call will still work functionally, but it'll look visually broken (inconsistent formatting) in the one screen judges will actually read closely.
+
 **Story 6 — As the backend, I can generate an allocation plan.**
 Greedy loop: sort unserved sites by `priority_score` descending, walk depots' inventory, assign until either resources or sites run out. Return the `reasoning` string per allocation (population + which urgency flags drove it) — this is what makes the plan feel transparent instead of a black box when Abdullah renders it.
 
 **Story 7 — As the backend, I can compute a route that avoids damaged roads.**
 Calls into `routing.py`, which loads the road graph Yasir provides in `database/geodata/`, removes any edge near an active `damaged_roads` entry, and runs shortest-path. Compute both the damaged-aware route and the naive direct route so you can return `delta_minutes_vs_direct` — that number is what sells the feature in the demo.
 
+**Internal interface for `routing.py` — specified exactly so this is reproducible regardless of who or what implements it:**
+```python
+import osmnx as ox
+import networkx as nx
+
+GRAPH_PATH = "../database/geodata/demo_region.graphml"   # relative to backend/ root
+
+def load_graph():
+    G = ox.load_graphml(GRAPH_PATH)
+    G = ox.add_edge_speeds(G)
+    G = ox.add_edge_travel_times(G)   # adds a 'travel_time' attribute to every edge — this is the weight to route on
+    return G
+
+def apply_damage(G, damaged_points: list[tuple[float, float]]):
+    G = G.copy()
+    for lat, lng in damaged_points:
+        u, v, key = ox.nearest_edges(G, lng, lat)   # note: osmnx takes (X=lng, Y=lat) order, not (lat, lng)
+        if G.has_edge(u, v, key):
+            G.remove_edge(u, v, key)
+    return G
+
+def compute_route(G, origin: tuple[float, float], dest: tuple[float, float]):
+    orig_node = ox.nearest_nodes(G, origin[1], origin[0])
+    dest_node = ox.nearest_nodes(G, dest[1], dest[0])
+    path = nx.shortest_path(G, orig_node, dest_node, weight="travel_time")
+    return path
+```
+Three specifics that must not be reinvented differently by anyone touching this file: the graph loads from `../database/geodata/demo_region.graphml` relative to `backend/`, routing weight is the `travel_time` edge attribute (added via `ox.add_edge_travel_times()`, not raw distance), and damaged points are snapped to their nearest edge via `ox.nearest_edges()` before removal — note OSMnx's `(x, y)` = `(lng, lat)` argument order, which is the single most common bug source when wiring this up.
+
 **Story 8 — As the backend, I can create a dispatch and safely decrement inventory.**
 Single-transaction requirement from the API contract above — this is the story most likely to have a subtle bug (partial writes under failure), so write the transaction test explicitly: simulate insufficient stock and assert nothing was written.
 
 **Story 9 — As the backend, I can replan when something changes.**
-Re-run stories 5–7 scoped to `status not in ('planned_dispatched', 'delivered')`, diff old ranks vs. new ranks, return only what changed. This is your last story before the demo script — test it specifically against the "bridge just went down mid-demo" scenario, since that's the moment you're building the whole pitch around.
+Re-run stories 5–7 scoped to `sites.status NOT IN ('dispatched', 'delivered')` — note this is the corrected filter; `'planned_dispatched'` is not a valid status value anywhere in the schema and must never appear in this query. `'dispatched'` already covers "a truck has left" regardless of whether the associated dispatch record has since progressed to `en_route` or `delivered` (that finer-grained progression lives on `dispatches.status`, not `sites.status` — see `MADAD_DATABASE.md`) — so a site marked `dispatched` is correctly excluded from replanning either way, with no need to check the dispatch's own status separately. Diff old ranks vs. new ranks, return only what changed. This is your last story before the demo script — test it specifically against the "bridge just went down mid-demo" scenario, since that's the moment you're building the whole pitch around.
 
 ---
 
@@ -298,6 +347,7 @@ EXTRACTION_PROVIDER=qwen
 QWEN_API_KEY=your_alibaba_cloud_key
 OLLAMA_URL=http://localhost:11434
 JWT_SECRET=change_me
+JWT_EXPIRY_MINUTES=480
 ```
 
 ## 6. Local Run

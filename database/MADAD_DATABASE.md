@@ -95,8 +95,12 @@ CREATE TABLE sites (
     confidence            VARCHAR(20) NOT NULL DEFAULT 'single_unverified'
                           CHECK (confidence IN ('single_unverified', 'corroborated')),
     priority_score        DOUBLE PRECISION,
+    severity              VARCHAR(20) CHECK (severity IN ('low', 'medium', 'high', 'critical') OR severity IS NULL),
     status                VARCHAR(20) NOT NULL DEFAULT 'unserved'
                           CHECK (status IN ('unserved', 'planned', 'dispatched', 'delivered')),
+    -- Note: 'en_route' is intentionally NOT a site status. It exists only on `dispatches.status`.
+    -- A site moving to 'dispatched' already means "do not touch in replanning," regardless of
+    -- whether the associated dispatch has since progressed to en_route or delivered.
     last_report_time      TIMESTAMPTZ DEFAULT now(),
     created_at             TIMESTAMPTZ DEFAULT now(),
     updated_at             TIMESTAMPTZ DEFAULT now()
@@ -159,7 +163,19 @@ CREATE INDEX idx_reports_center_status ON reports(center_id, status);
 
 ---
 
-## 3. Local Cache Schema — SQLite (`sqlite/local_schema.sql`)
+## 3. SCOPE DECISION: SQLite Offline Sync Is CUT From This Build
+
+**Read this before Sections 3–4 below.** After review, the local-cache-plus-sync layer is being cut from the hackathon MVP. Reasoning: it's a genuine distributed-systems problem (conflict resolution, UUID collision handling, retry logic) worth roughly a day and a half of the four days you have — and since judging happens over a live connection, it produces zero visible difference at the table. That's the wrong trade for this specific deadline.
+
+**What this means practically:** build straight against central PostgreSQL. No local SQLite cache, no `sync_service.py` running in the background, no `local_uuid` columns needed anywhere.
+
+**What to say in the pitch, honestly, not defensively:** *"Madad is architected for offline-first field operation — the coordinator's Gemma extraction layer already runs locally for exactly this reason. For this build, we prioritized the live coordination and routing experience you're seeing; the local-cache-and-sync layer for full offline resilience is the next phase, and the schema is already designed to support it."* That's true, it's specific, and it's the same "Phase 1 built / Phase 2 roadmap" framing that's worked in every pitch so far — say it plainly if a judge asks, don't oversell it as already built.
+
+Sections 3 and 4 below are kept in this document **as the documented Phase 2 design**, not as something to build this week. Don't run `sync_service.py`. Don't add `local_uuid` to `schema.sql`. If you finish everything else with real time to spare, revisit this section with the team — but that's a decision to make together on day 3 or 4, not a default to fall back into on day 1.
+
+---
+
+## 3a. [PHASE 2 — NOT BUILT FOR THIS DEMO] Local Cache Schema — SQLite (`sqlite/local_schema.sql`)
 
 Same table shapes as Postgres, minus `center_id` foreign key complexity (a single coordinator's device only ever writes for its own center), plus one extra table to track what's waiting to sync:
 
@@ -183,7 +199,7 @@ CREATE TABLE sync_queue (
 
 ---
 
-## 4. Sync Service (`sqlite/sync_service.py`) — this is the piece Muhammad Ahmad handed off to you
+## 4a. [PHASE 2 — NOT BUILT FOR THIS DEMO] Sync Service (`sqlite/sync_service.py`)
 
 **What it does, in plain terms:** every write from the coordinator's app first goes into the local SQLite file — instantly, with no network dependency. A background loop, running every 30 seconds (or triggered manually via a "Sync Now" action if you want a visible one for the demo), checks `sync_queue` for unsynced rows and pushes them to the central Postgres database whenever connectivity is available.
 
@@ -268,13 +284,13 @@ def fetch_region_graph(place_name: str, save_path: str):
 
 **Load order for setup scripts:** `support_centers` → `users` → `depots` → `inventory` → (leave `reports`/`sites`/`dispatches` empty at seed time — those get created live, during the actual demo, not pre-populated, since watching them get created live is the point of the demo).
 
-## 7. Local Run
+## 7. Local Run (MVP — matches the Section 3 scope decision, sync service intentionally excluded)
 ```bash
 cd database
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 psql <connection_string> -f postgres/schema.sql
 psql <connection_string> -f postgres/seed_data.sql
-python geodata/fetch_osm.py     # run once, commits demo_region.graphml
-python sqlite/sync_service.py   # run continuously alongside the backend during development/demo
+python geodata/fetch_osm.py     # run once, on Day 1, commits demo_region.graphml
 ```
+That's the complete run sequence for this build. `sqlite/sync_service.py` is Phase 2 (Section 4a) — do not run it unless the team explicitly decides to revisit that scope with real time to spare.
