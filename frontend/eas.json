@@ -1,0 +1,28 @@
+{
+  "cli": {
+    "version": ">= 19.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "env": {
+        "EAS_BUILD_NO_EXPO_GO_WARNING": "true"
+      },
+      "environment": "production",
+      "channel": "production",
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

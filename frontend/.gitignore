@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+
+# Expo (Removed expo-env.d.ts so TS stays happy)
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native Keys & Secrets (Global safety net)
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+*.kotlin/
+
+# Environment Files
+.env
+.env*.local
+
+# Build Artifacts & System Files
+*.tsbuildinfo
+.metro-health-check*
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & Debugging
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+logs/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+coverage/
+
+# Managed Workflow Native Folders
+android/
+ios/
+
+# @end expo-cli
+expo-env.d.ts
+
+# others
+.kiro
