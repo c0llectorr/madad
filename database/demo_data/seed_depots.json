@@ -1,0 +1,31 @@
+{
+  "center_id": 1,
+  "center_code": "RJP-01",
+  "depots": [
+    {
+      "name": "Depot A — Rajanpur Main",
+      "lat": 29.0981,
+      "lng": 70.3190,
+      "description": "Primary hub, closest to flood zone. Full kit.",
+      "inventory": [
+        { "resource_type": "food_packet",     "quantity": 400 },
+        { "resource_type": "water_container", "quantity": 150 },
+        { "resource_type": "boat",            "quantity": 2   },
+        { "resource_type": "ambulance",       "quantity": 1   },
+        { "resource_type": "medicine_kit",    "quantity": 30  },
+        { "resource_type": "tent",            "quantity": 20  }
+      ]
+    },
+    {
+      "name": "Depot B — Jampur Road",
+      "lat": 29.0502,
+      "lng": 70.5901,
+      "description": "Secondary depot, ~35 km east near Jampur. Lighter kit — food and shelter.",
+      "inventory": [
+        { "resource_type": "food_packet",     "quantity": 200 },
+        { "resource_type": "tent",            "quantity": 60  },
+        { "resource_type": "water_container", "quantity": 50  }
+      ]
+    }
+  ]
+}
