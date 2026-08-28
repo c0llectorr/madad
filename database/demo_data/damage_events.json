@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "center_id": 1,
+    "lat": 29.0850,
+    "lng": 70.3460,
+    "reason": "Rajanpur Bridge — bridge submerged, impassable",
+    "active": true,
+    "demo_trigger": "manual",
+    "demo_timing_note": "Fire this event mid-demo AFTER the first allocation plan is shown. This bridge sits on the primary route from Depot A to Chak 45 (the highest-priority site). Marking it damaged forces a replan — the route re-routes via Rojhan road, adding ~40 minutes, and Chak 52 (previously rank 3) jumps to rank 1 because its alternative route is unaffected. This is the moment to call /api/plan/replan with trigger='road_damage'.",
+    "affected_route": "Depot A (29.0981, 70.3190) → Chak 45 (29.152, 70.380)",
+    "expected_replan_effect": "Sites using this bridge get deprioritized or rerouted. Sites with unaffected routes move up in rank."
+  }
+]

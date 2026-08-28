@@ -1,0 +1,121 @@
+[
+  {
+    "id": 1,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Clear English report — should extract cleanly",
+    "raw_text": "Chak 45 near Rajanpur. Approximately 175 people stranded. Water entered houses 3 hours ago and is still rising. Several elderly residents cannot move. Urgent need for food and boats for evacuation. A pregnant woman also present."
+  },
+  {
+    "id": 2,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Urdu report — mixed urgency flags",
+    "raw_text": "چک 12 میں تقریباً 90 افراد پھنسے ہوئے ہیں۔ پانی بہت تیزی سے بڑھ رہا ہے۔ خوراک اور دوائیں درکار ہیں۔ کچھ بچے بھی ہیں جن کی فوری مدد ضروری ہے۔"
+  },
+  {
+    "id": 3,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Vague report — location unclear, tests geocode unmatched path",
+    "raw_text": "Flood situation near the river bend, somewhere between two villages. Around 50 people. They need shelter and clean water. The road to their area is blocked."
+  },
+  {
+    "id": 4,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Same location as report 1, different phrasing — deduplication test",
+    "raw_text": "45 Chak area, Rajanpur district. Flood water has entered. 180 residents affected. Boats needed urgently. Elderly and a pregnant woman on site."
+  },
+  {
+    "id": 5,
+    "center_id": 1,
+    "source": "manual",
+    "note": "High severity, medical evacuation needed",
+    "raw_text": "Rojhan area. At least 300 people cut off. Multiple injuries reported. A man with a broken leg cannot be moved. Water still rising, no exit route available. Ambulance and boats required immediately."
+  },
+  {
+    "id": 6,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Mixed Urdu-English report",
+    "raw_text": "Chak 67 mein 120 log hain. Paani ghar ke andar aa gaya hai. Food packets aur tents chahiye. Koi zakhmi nahi magar bachay hain. Please jaldi bhejo."
+  },
+  {
+    "id": 7,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Low urgency, shelter need only",
+    "raw_text": "Jampur outskirts. Around 40 families displaced. No injuries. Their homes are flooded but they have moved to higher ground. They need tents and blankets."
+  },
+  {
+    "id": 8,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Urdu, stranded, no exit",
+    "raw_text": "کوٹ مٹھن کے قریب ایک گاؤں میں 200 سے زائد لوگ پھنسے ہیں۔ تمام راستے بند ہیں، کشتی کے بغیر نکلنا ممکن نہیں۔ خوراک ختم ہو رہی ہے، بچے اور بزرگ بھی ہیں۔"
+  },
+  {
+    "id": 9,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Clean English, medicine and food",
+    "raw_text": "Chak 29. Approximately 65 people. Flood water entered yesterday. Currently stable but running out of food and medicines. No injuries. Children present."
+  },
+  {
+    "id": 10,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Same location as Chak 67 (report 6), different phrasing — second deduplication pair",
+    "raw_text": "Chak number 67, near Rajanpur. 130 people, water inside homes. Need food and temporary shelter. Some children. Situation worsening."
+  },
+  {
+    "id": 11,
+    "center_id": 1,
+    "source": "manual",
+    "note": "High population, moderate urgency",
+    "raw_text": "Fazilpur area, large village. Over 400 residents affected. Water level rising slowly. Main concern is food shortage — have enough for one more day. No injuries reported so far."
+  },
+  {
+    "id": 12,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Very vague — minimal extractable info",
+    "raw_text": "Flood hai. Help chahiye. Ghar doob gaya."
+  },
+  {
+    "id": 13,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Urdu with specific needs",
+    "raw_text": "شہر سلطان کے قریب تقریباً 85 افراد کو خوراک اور صاف پانی کی اشد ضرورت ہے۔ بچے بیمار پڑ رہے ہیں۔ دوائیں بھی درکار ہیں۔ کوئی زخمی نہیں۔"
+  },
+  {
+    "id": 14,
+    "center_id": 1,
+    "source": "manual",
+    "note": "English, critical — injury + pregnancy + rising water",
+    "raw_text": "Chak 52, close to Rajanpur. 220 people trapped. Water is rising fast — has already reached waist level indoors. One man seriously injured, needs evacuation. Pregnant woman also present. Food, medical evacuation, and boats urgently needed."
+  },
+  {
+    "id": 15,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Third location for Rojhan (same as report 5) — corroboration test",
+    "raw_text": "Rojhan mein halat bahut kharab hai. 280 log phasey hain. Zakhmi bhi hain. Paani upar aa raha hai aur koi rasta nahi. Fori madad chahiye."
+  },
+  {
+    "id": 16,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Clear structured situation, general needs",
+    "raw_text": "Head Islam area. About 110 people. Flood water is stable, not rising. Need food packets and water containers. A few elderly present. No medical emergencies."
+  },
+  {
+    "id": 17,
+    "center_id": 1,
+    "source": "manual",
+    "note": "Mixed script, riverside village",
+    "raw_text": "Chak 78 walay log 60 hain. Darya ke qareeb hain, darr hai ke paani aur barhay. Abhi sirf khana chahiye. Koi zakhmi nahi."
+  }
+]

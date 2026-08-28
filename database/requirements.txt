@@ -1,0 +1,5 @@
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.35
+osmnx==1.9.4
+networkx==3.3
+rapidfuzz==3.9.7
