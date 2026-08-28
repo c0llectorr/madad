@@ -1,0 +1,23 @@
+# Ignore local native folders (EAS builds them from scratch)
+android/
+ios/
+
+# Ignore local build artifacts
+dist/
+build/
+*.apk
+*.ipa
+
+# Ignore dependencies and environment
+node_modules/
+.env*
+.expo/
+
+# Ignore large media/docs not needed for the build
+docs/
+recordings/
+temp/
+
+# Ignore Git files
+.git/
+.github/
