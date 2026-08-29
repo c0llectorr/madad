@@ -10,6 +10,7 @@ from app.db.models import User, Center
 from app.services.extraction.base import ExtractionProvider
 from app.services.extraction.qwen_provider import QwenProvider
 from app.services.extraction.gemma_provider import GemmaProvider
+from app.services.extraction.groq_provider import GroqProvider
 
 security = HTTPBearer(auto_error=False)
 
@@ -53,4 +54,7 @@ def get_current_user(
 def get_extraction_provider() -> ExtractionProvider:
     if settings.EXTRACTION_PROVIDER == "gemma":
         return GemmaProvider()
-    return QwenProvider()
+    elif settings.EXTRACTION_PROVIDER == "groq":
+        return GroqProvider()
+    else:
+        return QwenProvider()  # Default to Qwen

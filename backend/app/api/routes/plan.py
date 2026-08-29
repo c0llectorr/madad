@@ -11,6 +11,8 @@ router = APIRouter(prefix="/plan", tags=["plan"])
 @router.post("/generate", response_model=PlanGenerateResponse)
 def generate_plan(req: PlanGenerateRequest, db: Session = Depends(get_db)):
     allocations = ReplanningService.generate_plan(db, req.center_id)
+    if not allocations:
+        return PlanGenerateResponse(allocations=[], message="No unserved sites")
     return PlanGenerateResponse(allocations=allocations)
 
 

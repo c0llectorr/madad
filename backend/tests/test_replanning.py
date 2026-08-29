@@ -1,11 +1,13 @@
+import os
 from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.db.models import Base, Center, Depot, Inventory, Site, DamagedRoad
 from app.services.replanning import ReplanningService
 
-# In-memory SQLite for replan tests
-engine = create_engine("sqlite:///:memory:")
+# Use PostgreSQL for tests (can be configured via environment variable)
+test_db_url = os.getenv("TEST_DATABASE_URL", "postgresql://postgres:madad123@localhost:5432/madad_test")
+engine = create_engine(test_db_url)
 TestingSessionLocal = sessionmaker(bind=engine)
 
 

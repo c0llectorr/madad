@@ -5,13 +5,8 @@ from app.core.config import settings
 from app.db.models import Base, Center, User, Depot, Inventory, Site, DamagedRoad
 from app.core.security import get_password_hash
 
-connect_args = {}
-if settings.DATABASE_URL.startswith("sqlite"):
-    connect_args = {"check_same_thread": False}
-
 engine = create_engine(
     settings.DATABASE_URL,
-    connect_args=connect_args,
     pool_pre_ping=True
 )
 
@@ -19,8 +14,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def init_db():
-    Base.metadata.create_all(bind=engine)
-    seed_initial_data()
+    try:
+        Base.metadata.create_all(bind=engine)
+        seed_initial_data()
+    except Exception as e:
+        print(f"WARNING: Database initialization skipped/failed: {e}")
+        print("Please ensure PostgreSQL is running and DATABASE_URL credentials in .env are correct.")
 
 
 def seed_initial_data():

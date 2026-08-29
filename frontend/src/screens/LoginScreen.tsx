@@ -100,7 +100,7 @@ export default function LoginScreen({ navigation }: Props) {
 									onChangeText={onChange}
 									onBlur={onBlur}
 									autoCapitalize="characters"
-									placeholder="e.g. ISB-01"
+									placeholder="e.g. RJP-01"
 									placeholderTextColor={colors.gray400}
 									accessibilityLabel="Center code"
 								/>

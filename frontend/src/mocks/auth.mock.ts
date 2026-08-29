@@ -5,7 +5,7 @@ export const mockLoginResponse: LoginResponse = {
 	token_type: 'bearer',
 	role: 'coordinator',
 	center_id: 1,
-	center_name: 'Islamabad Relief Center',
+	center_name: 'Rajanpur Support Center',
 }
 
 export const mockAdminLoginResponse: LoginResponse = {
@@ -13,32 +13,24 @@ export const mockAdminLoginResponse: LoginResponse = {
 	token_type: 'bearer',
 	role: 'admin',
 	center_id: 1,
-	center_name: 'Islamabad Relief Center',
+	center_name: 'Rajanpur Support Center',
 }
 
 export const mockCenters: Center[] = [
 	{
 		id: 1,
-		code: 'ISB',
-		name: 'Islamabad Relief Center',
-		region: 'Federal Capital Territory',
-		lat: 33.6844,
-		lng: 73.0479,
+		code: 'RJP-01',
+		name: 'Rajanpur Support Center',
+		region: 'Punjab',
+		lat: 29.1044,
+		lng: 70.3301,
 	},
 	{
 		id: 2,
-		code: 'LHR',
-		name: 'Lahore Relief Center',
+		code: 'MZF-01',
+		name: 'Muzaffargarh Support Center',
 		region: 'Punjab',
-		lat: 31.5204,
-		lng: 74.3587,
-	},
-	{
-		id: 3,
-		code: 'KHI',
-		name: 'Karachi Relief Center',
-		region: 'Sindh',
-		lat: 24.8607,
-		lng: 67.0011,
+		lat: 30.0750,
+		lng: 71.1800,
 	},
 ]

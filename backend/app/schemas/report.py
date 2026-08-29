@@ -60,6 +60,8 @@ class ExtractReportResponse(BaseModel):
     report_id: int
     extracted: ExtractedReportData
     geocode_status: Literal["matched", "unmatched"]
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 class ReportConfirmRequest(BaseModel):

@@ -125,6 +125,8 @@ export interface ExtractReportResponse {
 	report_id: number
 	extracted: ExtractedFields
 	geocode_status: GeocodeStatus
+	lat?: number
+	lng?: number
 }
 
 export interface ConfirmReportRequest {

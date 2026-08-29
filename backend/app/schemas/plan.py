@@ -18,6 +18,7 @@ class PlanGenerateRequest(BaseModel):
 
 class PlanGenerateResponse(BaseModel):
     allocations: List[AllocationItem] = Field(default_factory=list)
+    message: Optional[str] = None
 
 
 class ReplanChange(BaseModel):

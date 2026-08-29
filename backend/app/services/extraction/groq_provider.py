@@ -65,15 +65,15 @@ EXTRACT_TOOL = {
 }
 
 
-class QwenProvider(ExtractionProvider):
-    def __init__(self, api_key: str = settings.QWEN_API_KEY, api_url: str = settings.QWEN_API_URL):
+class GroqProvider(ExtractionProvider):
+    def __init__(self, api_key: str = settings.GROQ_API_KEY, api_url: str = settings.GROQ_API_URL):
         self.api_key = api_key
         self.api_url = api_url
-        self.model = settings.QWEN_MODEL
+        self.model = settings.GROQ_MODEL
 
     async def extract(self, raw_text: str) -> ExtractedReportData:
         # If API key is not configured or in testing/offline mode, fallback to heuristic extraction
-        if not self.api_key or self.api_key == "your_alibaba_cloud_key_here":
+        if not self.api_key or self.api_key == "your_groq_api_key_here":
             return self._heuristic_fallback_extraction(raw_text)
 
         headers = {
@@ -118,7 +118,7 @@ class QwenProvider(ExtractionProvider):
                 else:
                     return self._heuristic_fallback_extraction(raw_text)
         except Exception as e:
-            logger.warning(f"Qwen API extraction failed or timed out: {e}. Using deterministic parser.")
+            logger.warning(f"Groq API extraction failed or timed out: {e}. Using deterministic parser.")
             return self._heuristic_fallback_extraction(raw_text)
 
     def _heuristic_fallback_extraction(self, text: str) -> ExtractedReportData:

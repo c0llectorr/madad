@@ -22,20 +22,28 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 
 @router.post("", response_model=ReportCreateResponse, status_code=status.HTTP_201_CREATED)
 def create_report(req: ReportCreateRequest, db: Session = Depends(get_db)):
-    # FAST PATH: if structured_fields is present, skip extraction and insert confirmed Site directly
+    # FAST PATH: structured manual entry → site created immediately, no extraction
     if req.structured_fields and req.structured_fields.location_name:
         fields = req.structured_fields
-        # Canonical mapping: structured_fields.headcount -> sites.estimated_population
         estimated_population = fields.headcount if fields.headcount is not None else 0
         severity = fields.severity
 
-        # Geocode or use center coordinates as base
         matched_geo = GeocodingService.match_location(db, fields.location_name)
-        lat = matched_geo[0] if matched_geo else 29.15
-        lng = matched_geo[1] if matched_geo else 70.38
+        lat = matched_geo[0] if matched_geo else 29.1044
+        lng = matched_geo[1] if matched_geo else 70.3301
+
+        report = Report(
+            center_id=req.center_id,
+            source=req.source,
+            raw_text=req.raw_text or f"Structured input: {fields.location_name}",
+            status="confirmed"
+        )
+        db.add(report)
+        db.flush()
 
         site = Site(
             center_id=req.center_id,
+            report_id=report.id,
             location_name=fields.location_name,
             lat=lat,
             lng=lng,
@@ -48,20 +56,12 @@ def create_report(req: ReportCreateRequest, db: Session = Depends(get_db)):
             last_report_time=datetime.now(timezone.utc)
         )
         db.add(site)
-
-        report = Report(
-            center_id=req.center_id,
-            source=req.source,
-            raw_text=req.raw_text or f"Structured input: {fields.location_name}",
-            status="confirmed"
-        )
-        db.add(report)
         db.commit()
         db.refresh(report)
 
         return ReportCreateResponse(report_id=report.id, status="confirmed")
 
-    # SLOW PATH: Raw text report pending AI extraction
+    # SLOW PATH: raw text pending AI extraction
     report = Report(
         center_id=req.center_id,
         source=req.source,
@@ -85,7 +85,7 @@ async def extract_report(
     if not report:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
 
-    if report.status == "confirmed":
+    if report.status in ("confirmed", "rejected", "extracted"):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Report already extracted")
 
     if not report.raw_text:
@@ -93,20 +93,24 @@ async def extract_report(
 
     try:
         extracted = await extractor.extract(report.raw_text)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Extraction provider unavailable")
 
     report.extracted_data = json.dumps(extracted.model_dump())
+    report.status = "extracted"
     db.commit()
 
-    # Geocode location against gazetteer
     matched_geo = GeocodingService.match_location(db, extracted.location_name)
     geocode_status = "matched" if matched_geo else "unmatched"
+    lat = matched_geo[0] if matched_geo else None
+    lng = matched_geo[1] if matched_geo else None
 
     return ExtractReportResponse(
         report_id=report.id,
         extracted=extracted,
-        geocode_status=geocode_status
+        geocode_status=geocode_status,
+        lat=lat,
+        lng=lng,
     )
 
 
@@ -125,14 +129,12 @@ def confirm_report(
         db.commit()
         return ReportConfirmResponse(site_id=None, status="rejected")
 
-    # Ensure coordinates are provided
     if req.lat is None or req.lng is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Coordinates (lat/lng) are required to confirm a site"
         )
 
-    # Check for existing nearby site for deduplication / corroboration
     existing_site = db.query(Site).filter(
         Site.center_id == report.center_id,
         Site.location_name.ilike(f"%{req.location_name}%")
@@ -146,10 +148,12 @@ def confirm_report(
         existing_site.needs = merged_needs
         existing_site.urgency_flags = merged_flags
         existing_site.last_report_time = datetime.now(timezone.utc)
+        existing_site.report_id = report.id
         site_id = existing_site.id
     else:
         site = Site(
             center_id=report.center_id,
+            report_id=report.id,
             location_name=req.location_name,
             lat=req.lat,
             lng=req.lng,
@@ -181,9 +185,9 @@ def list_reports(
         query = query.filter(Report.center_id == center_id)
     if status_filter:
         query = query.filter(Report.status == status_filter)
-    
+
     reports = query.order_by(Report.created_at.desc()).all()
-    
+
     return [
         ReportItemResponse(
             report_id=r.id,
