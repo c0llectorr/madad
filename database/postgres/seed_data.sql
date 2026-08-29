@@ -8,8 +8,8 @@
 -- reports, sites, dispatches are intentionally LEFT EMPTY at seed time.
 -- Those get created LIVE during the demo — watching them appear is the point.
 --
--- Default password for all seeded accounts: madad123
--- Hash: bcrypt, cost factor 12, generated with Python bcrypt library.
+-- Default password for all seeded accounts: bilal123
+-- Hash: bcrypt, cost factor 12, generated with passlib[bcrypt]
 -- Muhammad Ahmad's backend uses passlib[bcrypt] to verify — compatible format.
 -- =============================================================================
 
@@ -25,7 +25,7 @@ ON CONFLICT (code) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 2. Users
--- All passwords = "madad123"
+-- All passwords = "bilal123"
 -- Hash = $2b$12$7vG/1n8WclAL1PP5tA857OfTx0WnVcN0FEfdH3f6YHrx0eIrY5k76
 -- ---------------------------------------------------------------------------
 INSERT INTO users (center_id, username, password_hash, role) VALUES

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import {
 	View,
 	Text,
@@ -34,6 +34,12 @@ const NEEDS_OPTIONS: NeedType[] = [
 	'general_evacuation',
 ]
 const URGENCY_OPTIONS: UrgencyFlag[] = [
+	'elderly_present',
+	'children_present',
+	'pregnancy',
+	'injury_reported',
+	'water_rising',
+	'stranded_no_exit',
 	'mass_casualty',
 	'critical_medical',
 	'infrastructure_collapse',
@@ -42,12 +48,21 @@ const URGENCY_OPTIONS: UrgencyFlag[] = [
 	'trapped_persons',
 ]
 
+// Rajanpur region fallback when geocoder returns no match
+const RAJANPUR_CENTER = { lat: 29.1044, lng: 70.3301 }
+
 type Props = NativeStackScreenProps<RootStackParamList, 'ReportReview'>
 
 export default function ReportReviewScreen({ route, navigation }: Props) {
 	const { extractResult } = route.params
-	const { extracted, geocode_status, report_id } = extractResult
+	const { extracted, geocode_status, report_id, lat: geoLat, lng: geoLng } =
+		extractResult
 	const confirmMutation = useConfirmReport()
+
+	const defaultLat =
+		geocode_status === 'matched' && geoLat != null ? geoLat : undefined
+	const defaultLng =
+		geocode_status === 'matched' && geoLng != null ? geoLng : undefined
 
 	const {
 		control,
@@ -59,8 +74,8 @@ export default function ReportReviewScreen({ route, navigation }: Props) {
 		resolver: zodResolver(reportReviewSchema),
 		defaultValues: {
 			location_name: extracted.location_name,
-			lat: geocode_status === 'matched' ? 33.6844 : undefined, // placeholder if matched
-			lng: geocode_status === 'matched' ? 73.0479 : undefined,
+			lat: defaultLat,
+			lng: defaultLng,
 			estimated_population: extracted.estimated_population,
 			needs: extracted.needs,
 			urgency_flags: extracted.urgency_flags,
@@ -126,11 +141,72 @@ export default function ReportReviewScreen({ route, navigation }: Props) {
 				{geocode_status === 'unmatched' && (
 					<View style={styles.unmatchedBanner}>
 						<Text style={styles.unmatchedText}>
-							Location not matched — drop a pin on the map to set
-							coordinates before confirming.
+							Location not matched — enter coordinates below (Rajanpur
+							region: ~29.10, 70.33).
 						</Text>
-						{/* TODO: embed MapView with draggable pin here and call setValue('lat'/'lng') */}
 					</View>
+				)}
+
+				{geocode_status === 'unmatched' && (
+					<>
+						<Text style={styles.fieldLabel}>Latitude</Text>
+						<Controller
+							control={control}
+							name="lat"
+							render={({ field: { onChange, value, onBlur } }) => (
+								<TextInput
+									style={[
+										styles.input,
+										errors.lat && styles.inputError,
+									]}
+									value={value != null ? String(value) : ''}
+									onChangeText={(t) =>
+										onChange(t ? parseFloat(t) : undefined)
+									}
+									onBlur={onBlur}
+									keyboardType="decimal-pad"
+									placeholder={String(RAJANPUR_CENTER.lat)}
+									placeholderTextColor={colors.gray400}
+									accessibilityLabel="Latitude"
+								/>
+							)}
+						/>
+						{errors.lat && (
+							<Text style={styles.errorText}>{errors.lat.message}</Text>
+						)}
+
+						<Text style={styles.fieldLabel}>Longitude</Text>
+						<Controller
+							control={control}
+							name="lng"
+							render={({ field: { onChange, value, onBlur } }) => (
+								<TextInput
+									style={[
+										styles.input,
+										errors.lng && styles.inputError,
+									]}
+									value={value != null ? String(value) : ''}
+									onChangeText={(t) =>
+										onChange(t ? parseFloat(t) : undefined)
+									}
+									onBlur={onBlur}
+									keyboardType="decimal-pad"
+									placeholder={String(RAJANPUR_CENTER.lng)}
+									placeholderTextColor={colors.gray400}
+									accessibilityLabel="Longitude"
+								/>
+							)}
+						/>
+						{errors.lng && (
+							<Text style={styles.errorText}>{errors.lng.message}</Text>
+						)}
+					</>
+				)}
+
+				{geocode_status === 'matched' && geoLat != null && geoLng != null && (
+					<Text style={styles.coordsHint}>
+						Geocoded: {geoLat.toFixed(4)}, {geoLng.toFixed(4)}
+					</Text>
 				)}
 
 				{/* Location name */}
@@ -291,6 +367,20 @@ const styles = StyleSheet.create({
 		borderColor: colors.warning,
 	},
 	unmatchedText: { ...typography.caption, color: colors.warning },
+	coordsHint: {
+		...typography.caption,
+		color: colors.textSecondary,
+		marginBottom: spacing.base,
+	},
+	input: {
+		borderWidth: 1,
+		borderColor: colors.border,
+		borderRadius: 8,
+		paddingHorizontal: spacing.base,
+		height: 48,
+		...typography.body,
+		backgroundColor: colors.surface,
+	},
 	fieldLabel: {
 		...typography.captionBold,
 		textTransform: 'uppercase',
@@ -304,11 +394,6 @@ const styles = StyleSheet.create({
 		borderColor: colors.aiSuggestedBorder,
 		borderRadius: 8,
 		backgroundColor: colors.aiSuggested,
-	},
-	input: {
-		paddingHorizontal: spacing.base,
-		height: 48,
-		...typography.body,
 	},
 	inputError: { borderColor: colors.error },
 	errorText: {

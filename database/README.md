@@ -14,9 +14,7 @@ database/
 │   ├── migrations/
 │   │   └── 001_initial.sql    # Idempotent version (IF NOT EXISTS + transaction)
 │   └── seed_data.sql           # Demo centers, users, depots, inventory
-├── sqlite/                     # [PHASE 2 — do not run]
-│   ├── local_schema.sql
-│   └── sync_service.py
+
 ├── geodata/
 │   ├── fetch_osm.py            # Run ONCE on Day 1 to generate demo_region.graphml
 │   ├── gazetteer.py            # Fuzzy settlement-name → lat/lng lookup
@@ -54,6 +52,15 @@ For local development, install PostgreSQL and create the database:
 psql -U postgres -c "CREATE DATABASE madad;"
 ```
 
+#### Using Environment Variables (Recommended)
+Create a `.env` file in the project root with your database configuration:
+
+```bash
+# PostgreSQL Configuration
+DATABASE_URL="postgresql://postgres:your_password@localhost:5432/madad"
+```
+
+#### Manual Configuration
 Set your connection string (replace with your actual credentials):
 
 ```
@@ -78,7 +85,7 @@ psql <connection_string> -f postgres/schema.sql
 psql <connection_string> -f postgres/seed_data.sql
 ```
 
-**Seeded accounts (password for all: `madad123`):**
+**Seeded accounts (password for all: `bilal123`):**
 
 | Center | Code   | Username    | Role        |
 |--------|--------|-------------|-------------|
@@ -137,11 +144,6 @@ All tests should print `PASS`. If any fail, check the threshold or settlement en
 
 ---
 
-## What Is NOT Built (Phase 2)
+## Architecture Note
 
-| Item | Status | Pitch line |
-|---|---|---|
-| SQLite offline cache | Phase 2 — not built | "Architected for offline-first — schema already supports it; prioritized live coordination for this build." |
-| `sync_service.py` | Phase 2 — do not run | Same as above |
-
-The `sqlite/` folder is kept as documented Phase 2 design — do not run these files unless the team explicitly decides to revisit offline sync with genuine spare time on Day 3 or 4.
+MADAD uses PostgreSQL as its primary database. The application is designed for real-time coordination with all data stored in a central PostgreSQL database for consistency and reliability.
