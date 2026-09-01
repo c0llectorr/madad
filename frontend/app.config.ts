@@ -7,7 +7,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 	...config,
 	name: 'MADAD',
 	slug: 'madad',
-	version: '1.0.0',
+	version: '1.1.0',
 	runtimeVersion: { policy: 'fingerprint' },
 	description: 'Relief coordination for support centers',
 	platforms: ['ios', 'android'],
@@ -21,9 +21,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 	android: {
 		package: 'com.madad.madad',
 		adaptiveIcon: {
-			backgroundColor: '#E6F4FE',
+			backgroundColor: '#464B71',
 			foregroundImage: './assets/images/favicon.png',
 		},
+		softwareKeyboardLayoutMode: 'pan',
 		predictiveBackGestureEnabled: true,
 		permissions: [
 			'android.permission.INTERNET',

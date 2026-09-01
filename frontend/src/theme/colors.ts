@@ -1,72 +1,79 @@
-// MADAD color palette
-// Primary: calm teal/blue for navigation & buttons
-// Urgency: red/orange/yellow — reserved ONLY for urgency indicators, never decoration
+// MADAD color palette — official brand colors
+// Primary Dark: #464B71  | Primary Blue: #118AB2
+// Secondary/Aqua: #7CD5C7 | Background/Off-white: #F2F2ED
+//
+// Urgency: red/orange/yellow — reserved ONLY for urgency badges/markers, never decoration
 // Neutral: gray scale for text, borders, backgrounds
 
 export const colors = {
-	// Primary brand
-	primary: '#1A7FBD',
-	primaryLight: '#E6F4FE',
-	primaryDark: '#135A8A',
+	// ── Brand primaries ────────────────────────────────────────────────────────
+	primary: '#118AB2', // Primary Blue — actions, links, interactive elements
+	primaryLight: '#E6F5FB', // Tinted primary for light backgrounds / badges
+	primaryDark: '#464B71', // Primary Dark — nav, headers, strong structural elements
 
-	// Urgency — do not reuse these for anything other than urgency badges/markers
-	urgencyCritical: '#D32F2F', // red
-	urgencyHigh: '#E64A19', // deep orange
-	urgencyMedium: '#F57C00', // orange
-	urgencyLow: '#FBC02D', // amber/yellow
+	// ── Secondary / Aqua ───────────────────────────────────────────────────────
+	secondary: '#7CD5C7', // Aqua — accents, positive/supportive states, highlights
+	secondaryLight: '#E8F7F5', // Light tint of secondary
 
-	// Severity (for Manual Report Entry segmented buttons)
-	severityCritical: '#D32F2F',
-	severityHigh: '#E64A19',
-	severityMedium: '#F57C00',
-	severityLow: '#388E3C',
-
-	// Status
-	statusPlanned: '#1565C0',
-	statusEnRoute: '#F57C00',
-	statusDelivered: '#388E3C',
-
-	// Neutral scale
-	white: '#FFFFFF',
-	gray100: '#F5F5F5',
-	gray200: '#EEEEEE',
-	gray300: '#E0E0E0',
-	gray400: '#BDBDBD',
-	gray500: '#9E9E9E',
-	gray600: '#757575',
-	gray700: '#616161',
-	gray800: '#424242',
-	gray900: '#212121',
-	black: '#000000',
-
-	// Backgrounds
-	background: '#F7FAFD',
-	surface: '#FFFFFF',
+	// ── Background / Surface ───────────────────────────────────────────────────
+	background: '#F2F2ED', // Off-white — main page backgrounds
+	surface: '#FFFFFF', // Cards, inputs, sheet backgrounds
 	surfaceElevated: '#FFFFFF',
 
-	// Text
-	textPrimary: '#212121',
-	textSecondary: '#616161',
-	textDisabled: '#9E9E9E',
+	// ── Text ───────────────────────────────────────────────────────────────────
+	textPrimary: '#1A1F36', // Near-black for primary text (good contrast on #F2F2ED)
+	textSecondary: '#5A6070', // Muted secondary text
+	textDisabled: '#9EA5B4',
 	textInverse: '#FFFFFF',
 
-	// Borders
-	border: '#E0E0E0',
-	borderFocus: '#1A7FBD',
+	// ── Borders ────────────────────────────────────────────────────────────────
+	border: '#DDE0E7',
+	borderFocus: '#118AB2',
 
-	// Feedback
-	error: '#D32F2F',
+	// ── Urgency ────────────────────────────────────────────────────────────────
+	// These MUST NOT be used for decoration — reserved strictly for urgency UI
+	urgencyCritical: '#C62828', // deep red
+	urgencyHigh: '#D84315', // deep orange
+	urgencyMedium: '#E65100', // orange
+	urgencyLow: '#F9A825', // amber
+
+	// ── Severity (Manual Report Entry — segmented buttons) ─────────────────────
+	severityCritical: '#C62828',
+	severityHigh: '#D84315',
+	severityMedium: '#E65100',
+	severityLow: '#2E7D32',
+
+	// ── Dispatch / status ──────────────────────────────────────────────────────
+	statusPlanned: '#118AB2',
+	statusEnRoute: '#E65100',
+	statusDelivered: '#2E7D32',
+
+	// ── Feedback ───────────────────────────────────────────────────────────────
+	error: '#C62828',
 	errorLight: '#FFEBEE',
-	success: '#388E3C',
+	success: '#2E7D32',
 	successLight: '#E8F5E9',
-	warning: '#F57C00',
+	warning: '#E65100',
 	warningLight: '#FFF3E0',
-	info: '#1565C0',
-	infoLight: '#E3F2FD',
+	info: '#118AB2',
+	infoLight: '#E6F5FB',
 
-	// AI suggestion indicator
-	aiSuggested: '#EDE7F6',
-	aiSuggestedBorder: '#7E57C2',
+	// ── Neutral scale ──────────────────────────────────────────────────────────
+	white: '#FFFFFF',
+	gray100: '#F5F6F8',
+	gray200: '#EBEDF2',
+	gray300: '#D8DCE6',
+	gray400: '#B0B7C3',
+	gray500: '#8C95A6',
+	gray600: '#6B7280',
+	gray700: '#4B5563',
+	gray800: '#374151',
+	gray900: '#1F2937',
+	black: '#000000',
+
+	// ── AI suggestion indicator ────────────────────────────────────────────────
+	aiSuggested: '#EEF0F9', // light tint of primaryDark
+	aiSuggestedBorder: '#464B71', // primaryDark border
 } as const
 
 export type Colors = typeof colors

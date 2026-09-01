@@ -3,10 +3,12 @@ import { LoginRequest, LoginResponse, Center } from '../types'
 
 export const authApi = {
 	login: async (data: LoginRequest): Promise<LoginResponse> => {
-		const response = await apiClient.post<LoginResponse>(
-			'/auth/login',
-			data
-		)
+		// API contract only accepts { username, password } — center_code is
+		// frontend-only UX to help users identify their center, not sent to server.
+		const response = await apiClient.post<LoginResponse>('/auth/login', {
+			username: data.username,
+			password: data.password,
+		})
 		return response.data
 	},
 

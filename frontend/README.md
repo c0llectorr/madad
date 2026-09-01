@@ -31,6 +31,7 @@ yarn install
 Edit the `.env` file with your configuration:
 
 #### Backend API URL
+
 ```bash
 # For local development (same machine)
 EXPO_PUBLIC_API_BASE_URL=http://localhost:8000/api
@@ -49,6 +50,7 @@ EXPO_PUBLIC_API_BASE_URL=http://localhost:8000/api
 ```
 
 #### Development Flags
+
 ```bash
 # Use mock data (no backend required)
 EXPO_PUBLIC_USE_MOCK=false
@@ -70,6 +72,7 @@ yarn start
 ### 5. Run on Devices
 
 #### Android
+
 ```bash
 # Android emulator
 npm run android
@@ -79,6 +82,7 @@ npm run android
 ```
 
 #### iOS
+
 ```bash
 # iOS simulator (macOS only)
 npm run ios
@@ -90,9 +94,11 @@ npm run ios
 ## Environment Variables Reference
 
 ### Required Variables
+
 - `EXPO_PUBLIC_API_BASE_URL`: Backend API base URL
 
 ### Optional Variables
+
 - `EXPO_PUBLIC_USE_MOCK`: Use mock data instead of real backend
 - `EXPO_PUBLIC_ENABLE_DEBUG`: Enable debug features
 - `EXPO_PUBLIC_LOG_LEVEL`: Log level (debug, info, warn, error)
@@ -102,7 +108,8 @@ npm run ios
 ## Development
 
 ### Project Structure
-```
+
+```bash
 frontend/
 ├── app/                 # Expo Router entry points
 ├── src/
@@ -119,6 +126,7 @@ frontend/
 ```
 
 ### Key Dependencies
+
 - **Expo**: React Native framework
 - **React Navigation**: Navigation library
 - **Zustand**: State management
@@ -128,6 +136,7 @@ frontend/
 - **MapLibre**: Mapping library
 
 ### Code Style
+
 - TypeScript for type safety
 - Functional components with hooks
 - Custom hooks for business logic
@@ -137,6 +146,7 @@ frontend/
 ## Testing
 
 ### Run Tests
+
 ```bash
 # Unit tests
 npm test
@@ -149,6 +159,7 @@ npm run format
 ```
 
 ### Testing on Different Devices
+
 1. **Android Emulator**: Requires Android Studio
 2. **iOS Simulator**: Requires Xcode (macOS only)
 3. **Physical Devices**: Use Expo Go app
@@ -156,17 +167,20 @@ npm run format
 ## Troubleshooting
 
 ### Backend Connection Issues
+
 1. Verify backend is running: `curl http://localhost:8000/health`
 2. Check `EXPO_PUBLIC_API_BASE_URL` in `.env`
 3. Ensure no firewall blocking port 8000
 4. For physical devices, use computer's IP address
 
 ### Build Issues
+
 1. Clear cache: `expo start --clear`
 2. Reinstall dependencies: `rm -rf node_modules && npm install`
 3. Check Node.js version: `node --version` (recommended: 18+)
 
 ### Expo Go Issues
+
 1. Ensure Expo Go app is updated
 2. Same network for device and computer
 3. No VPN interfering with local network
@@ -174,6 +188,7 @@ npm run format
 ## Deployment
 
 ### Building for Production
+
 ```bash
 # Build for Android
 eas build --platform android
@@ -183,12 +198,15 @@ eas build --platform ios
 ```
 
 ### Environment-Specific Builds
+
 Create different `.env` files:
+
 - `.env.development`: Development settings
 - `.env.production`: Production settings
 - `.env.staging`: Staging settings
 
 ### App Store Deployment
+
 1. Update app metadata in `app.config.ts`
 2. Configure EAS build profiles
 3. Submit to App Store/Play Console
