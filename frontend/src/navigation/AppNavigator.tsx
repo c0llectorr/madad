@@ -38,6 +38,7 @@ export type RootStackParamList = {
 		dispatch: CreateDispatchResponse
 		depot: Depot
 		site: Site
+		resources: import('../types').Resource[]
 	}
 }
 

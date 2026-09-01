@@ -1,7 +1,7 @@
 // MADAD typography scale
 // One font family, three sizes only — resist adding a fourth
 
-import { StyleSheet, TextStyle } from 'react-native'
+import { TextStyle } from 'react-native'
 import { colors } from './colors'
 
 export const fontFamily = {

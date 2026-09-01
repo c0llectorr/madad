@@ -1,7 +1,7 @@
-import axios from 'axios'
+import { create } from 'axios'
 import { secureStorage } from '../lib/secureStorage'
 
-export const apiClient = axios.create({
+export const apiClient = create({
 	baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
 	timeout: 15_000, // 15s — field conditions may have latency
 	headers: { 'Content-Type': 'application/json' },

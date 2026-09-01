@@ -176,7 +176,6 @@ Layout: three large tappable cards, stacked vertically, each with an icon, a tit
 ---
 
 ## 5. Design System (apply consistently across every screen above — don't reinvent per screen)
-## 5. Design System (apply consistently across every screen above — don't reinvent per screen)
 
 - **Spacing scale:** 4, 8, 12, 16, 20, 24, 32 (dp) — pick from this scale only, never an arbitrary number like 15 or 22. Store these as named constants in `theme/spacing.ts` (`spacing.sm = 8`, `spacing.md = 16`, etc.) and import them everywhere rather than hardcoding numbers inline.
 - **Screen margins:** 20dp horizontal on every screen, consistently.

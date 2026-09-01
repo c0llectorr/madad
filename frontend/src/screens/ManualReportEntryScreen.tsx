@@ -45,6 +45,7 @@ export default function ManualReportEntryScreen({ navigation }: Props) {
 	const {
 		control,
 		handleSubmit,
+		reset,
 		formState: { errors, isValid },
 	} = useForm<ManualReportFormValues>({
 		resolver: zodResolver(manualReportSchema),
@@ -71,12 +72,37 @@ export default function ManualReportEntryScreen({ navigation }: Props) {
 					contact_number: values.contact_number,
 				},
 			})
-			navigation.navigate('Dashboard')
-		} catch (err: any) {
+
+			// Clear the form first, then show success feedback before navigating
+			reset()
 			Alert.alert(
-				'Error',
-				err?.response?.data?.detail ?? 'Failed to submit report.'
+				'Report Submitted',
+				'The relief report has been submitted successfully.',
+				[
+					{
+						text: 'Submit Another',
+						// Stay on the screen with a fresh form
+					},
+					{
+						text: 'Go to Dashboard',
+						onPress: () => navigation.navigate('Dashboard'),
+					},
+				]
 			)
+		} catch (err: any) {
+			const detail = err?.response?.data?.detail
+			if (err?.response?.status === 422) {
+				Alert.alert(
+					'Incomplete Report',
+					'Please fill in all required fields before submitting.'
+				)
+			} else {
+				Alert.alert(
+					'Submission Failed',
+					detail ??
+						'Could not submit the report. Check your connection and try again.'
+				)
+			}
 		}
 	}
 
@@ -87,115 +113,174 @@ export default function ManualReportEntryScreen({ navigation }: Props) {
 			<ScrollView
 				contentContainerStyle={styles.scrollContent}
 				keyboardShouldPersistTaps="handled"
+				showsVerticalScrollIndicator={false}
 			>
-				{/* Location */}
-				<Text style={styles.fieldLabel}>Location</Text>
-				<Controller
-					control={control}
-					name="location_name"
-					render={({ field: { onChange, value, onBlur } }) => (
-						<TextInput
-							style={[
-								styles.input,
-								errors.location_name && styles.inputError,
-							]}
-							value={value}
-							onChangeText={onChange}
-							onBlur={onBlur}
-							placeholder="Search location or describe"
-							placeholderTextColor={colors.gray400}
-							accessibilityLabel="Location"
-						/>
-					)}
-				/>
-				{errors.location_name && (
-					<Text style={styles.errorText}>
-						{errors.location_name.message}
+				{/* ── Helper note ────────────────────────────────────────── */}
+				<View style={styles.helperBanner}>
+					<Text style={styles.helperText}>
+						Fill in what you know. Fields marked{' '}
+						<Text style={styles.required}>*</Text> are required.
 					</Text>
-				)}
+				</View>
 
-				{/* Headcount — labeled "Headcount" in UI, maps to estimated_population server-side */}
-				<Text style={styles.fieldLabel}>Headcount</Text>
-				<Controller
-					control={control}
-					name="headcount"
-					render={({ field: { onChange, value, onBlur } }) => (
-						<TextInput
-							style={[
-								styles.input,
-								errors.headcount && styles.inputError,
-							]}
-							value={value ? String(value) : ''}
-							onChangeText={(t) =>
-								onChange(t ? parseInt(t, 10) : undefined)
-							}
-							onBlur={onBlur}
-							keyboardType="numeric"
-							placeholder="Estimated number of people"
-							placeholderTextColor={colors.gray400}
-							accessibilityLabel="Headcount"
-						/>
-					)}
-				/>
-				{errors.headcount && (
-					<Text style={styles.errorText}>
-						{errors.headcount.message}
+				{/* ── Location ───────────────────────────────────────────── */}
+				<View style={styles.fieldGroup}>
+					<Text style={styles.fieldLabel}>
+						Location <Text style={styles.required}>*</Text>
 					</Text>
-				)}
-
-				{/* Severity — colored segmented buttons, not a dropdown */}
-				<Text style={styles.fieldLabel}>Severity</Text>
-				<Controller
-					control={control}
-					name="severity"
-					render={({ field: { onChange, value } }) => (
-						<SeveritySegment selected={value} onSelect={onChange} />
+					<Text style={styles.helpText}>
+						Village, town, or landmark name
+					</Text>
+					<Controller
+						control={control}
+						name="location_name"
+						render={({ field: { onChange, value, onBlur } }) => (
+							<TextInput
+								style={[
+									styles.input,
+									errors.location_name && styles.inputError,
+								]}
+								value={value}
+								onChangeText={onChange}
+								onBlur={onBlur}
+								placeholder="e.g. Chak 45, near Main Canal"
+								placeholderTextColor={colors.gray400}
+								accessibilityLabel="Location name"
+								returnKeyType="next"
+							/>
+						)}
+					/>
+					{errors.location_name && (
+						<Text
+							style={styles.errorText}
+							accessibilityRole="alert"
+						>
+							{errors.location_name.message}
+						</Text>
 					)}
-				/>
+				</View>
 
-				{/* Needs */}
-				<Text style={styles.fieldLabel}>Needs</Text>
-				<Controller
-					control={control}
-					name="needs"
-					render={({ field: { onChange, value } }) => (
-						<MultiSelectChips
-							options={NEEDS_OPTIONS}
-							selected={value}
-							onToggle={(opt) => {
-								const next = value.includes(opt as NeedType)
-									? value.filter((v) => v !== opt)
-									: [...value, opt as NeedType]
-								onChange(next)
-							}}
-						/>
+				{/* ── Headcount ──────────────────────────────────────────── */}
+				<View style={styles.fieldGroup}>
+					<Text style={styles.fieldLabel}>
+						Headcount <Text style={styles.required}>*</Text>
+					</Text>
+					<Text style={styles.helpText}>
+						Estimated number of people affected
+					</Text>
+					<Controller
+						control={control}
+						name="headcount"
+						render={({ field: { onChange, value, onBlur } }) => (
+							<TextInput
+								style={[
+									styles.input,
+									errors.headcount && styles.inputError,
+								]}
+								value={value ? String(value) : ''}
+								onChangeText={(t) =>
+									onChange(t ? parseInt(t, 10) : undefined)
+								}
+								onBlur={onBlur}
+								keyboardType="numeric"
+								placeholder="e.g. 250"
+								placeholderTextColor={colors.gray400}
+								accessibilityLabel="Estimated headcount"
+								returnKeyType="done"
+							/>
+						)}
+					/>
+					{errors.headcount && (
+						<Text
+							style={styles.errorText}
+							accessibilityRole="alert"
+						>
+							{errors.headcount.message}
+						</Text>
 					)}
-				/>
-				{errors.needs && (
-					<Text style={styles.errorText}>{errors.needs.message}</Text>
-				)}
+				</View>
 
-				{/* Contact number (optional) */}
-				<Text style={styles.fieldLabel}>Contact Number (optional)</Text>
-				<Controller
-					control={control}
-					name="contact_number"
-					render={({ field: { onChange, value, onBlur } }) => (
-						<TextInput
-							style={styles.input}
-							value={value}
-							onChangeText={onChange}
-							onBlur={onBlur}
-							keyboardType="phone-pad"
-							placeholder="+92 300 0000000"
-							placeholderTextColor={colors.gray400}
-							accessibilityLabel="Contact number"
-						/>
+				{/* ── Severity ───────────────────────────────────────────── */}
+				<View style={styles.fieldGroup}>
+					<Text style={styles.fieldLabel}>
+						Severity <Text style={styles.required}>*</Text>
+					</Text>
+					<Text style={styles.helpText}>
+						How urgent is the situation?
+					</Text>
+					<Controller
+						control={control}
+						name="severity"
+						render={({ field: { onChange, value } }) => (
+							<SeveritySegment
+								selected={value as Severity}
+								onSelect={onChange}
+							/>
+						)}
+					/>
+				</View>
+
+				{/* ── Needs ─────────────────────────────────────────────── */}
+				<View style={styles.fieldGroup}>
+					<Text style={styles.fieldLabel}>
+						Needs <Text style={styles.required}>*</Text>
+					</Text>
+					<Text style={styles.helpText}>Select all that apply</Text>
+					<Controller
+						control={control}
+						name="needs"
+						render={({ field: { onChange, value } }) => (
+							<MultiSelectChips
+								options={NEEDS_OPTIONS}
+								selected={value}
+								onToggle={(opt) => {
+									const next = value.includes(opt as NeedType)
+										? value.filter((v) => v !== opt)
+										: [...value, opt as NeedType]
+									onChange(next)
+								}}
+							/>
+						)}
+					/>
+					{errors.needs && (
+						<Text
+							style={styles.errorText}
+							accessibilityRole="alert"
+						>
+							{errors.needs.message}
+						</Text>
 					)}
-				/>
+				</View>
+
+				{/* ── Contact number ─────────────────────────────────────── */}
+				<View style={styles.fieldGroup}>
+					<Text style={styles.fieldLabel}>
+						Contact Number{' '}
+						<Text style={styles.optional}>(optional)</Text>
+					</Text>
+					<Text style={styles.helpText}>
+						Field worker or local contact
+					</Text>
+					<Controller
+						control={control}
+						name="contact_number"
+						render={({ field: { onChange, value, onBlur } }) => (
+							<TextInput
+								style={styles.input}
+								value={value}
+								onChangeText={onChange}
+								onBlur={onBlur}
+								keyboardType="phone-pad"
+								placeholder="+92 300 0000000"
+								placeholderTextColor={colors.gray400}
+								accessibilityLabel="Contact number (optional)"
+							/>
+						)}
+					/>
+				</View>
 			</ScrollView>
 
-			{/* Submit */}
+			{/* ── Submit footer ──────────────────────────────────────────── */}
 			<View style={styles.footer}>
 				<TouchableOpacity
 					style={[
@@ -205,7 +290,7 @@ export default function ManualReportEntryScreen({ navigation }: Props) {
 					onPress={handleSubmit(onSubmit)}
 					disabled={!isValid || isPending}
 					accessibilityRole="button"
-					accessibilityLabel="Submit report"
+					accessibilityLabel="Submit relief report"
 				>
 					{isPending ? (
 						<ActivityIndicator color={colors.white} />
@@ -227,29 +312,70 @@ const styles = StyleSheet.create({
 		paddingTop: spacing.base,
 		paddingBottom: spacing.xxxl,
 	},
+
+	// ── Helper banner ─────────────────────────────────────────────────────────
+	helperBanner: {
+		backgroundColor: colors.primaryLight,
+		borderRadius: 8,
+		padding: spacing.base,
+		marginBottom: spacing.base,
+		borderWidth: 1,
+		borderColor: colors.primary,
+		borderStyle: 'dashed',
+	},
+	helperText: {
+		...typography.caption,
+		color: colors.primary,
+		lineHeight: 18,
+	},
+
+	// ── Field groups ──────────────────────────────────────────────────────────
+	fieldGroup: {
+		marginBottom: spacing.xl,
+	},
 	fieldLabel: {
 		...typography.captionBold,
 		textTransform: 'uppercase',
 		letterSpacing: 0.5,
-		marginTop: spacing.base,
 		marginBottom: spacing.xs,
 		color: colors.textSecondary,
 	},
+	helpText: {
+		...typography.caption,
+		color: colors.textSecondary,
+		marginBottom: spacing.sm,
+	},
+	required: {
+		color: colors.error,
+		textTransform: 'none',
+	},
+	optional: {
+		color: colors.gray400,
+		fontWeight: '400',
+		textTransform: 'none',
+		fontSize: 12,
+	},
 	input: {
-		borderWidth: 1,
+		borderWidth: 1.5,
 		borderColor: colors.border,
-		borderRadius: 8,
+		borderRadius: 10,
 		paddingHorizontal: spacing.base,
-		height: 48,
+		height: 50,
 		...typography.body,
 		backgroundColor: colors.surface,
+		color: colors.textPrimary,
 	},
-	inputError: { borderColor: colors.error },
+	inputError: {
+		borderColor: colors.error,
+		backgroundColor: colors.errorLight,
+	},
 	errorText: {
 		...typography.caption,
 		color: colors.error,
-		marginTop: spacing.xs,
+		marginTop: spacing.sm,
 	},
+
+	// ── Footer ────────────────────────────────────────────────────────────────
 	footer: {
 		paddingHorizontal: spacing.lg,
 		paddingVertical: spacing.base,
@@ -259,11 +385,15 @@ const styles = StyleSheet.create({
 	},
 	submitButton: {
 		backgroundColor: colors.primary,
-		borderRadius: 8,
-		height: 48,
+		borderRadius: 10,
+		height: 52,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
-	submitButtonDisabled: { opacity: 0.5 },
-	submitButtonText: { ...typography.bodyBold, color: colors.white },
+	submitButtonDisabled: { opacity: 0.45 },
+	submitButtonText: {
+		...typography.bodyBold,
+		color: colors.white,
+		fontSize: 17,
+	},
 })

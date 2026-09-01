@@ -27,16 +27,36 @@ import ErrorInline from '../components/ErrorInline'
 import { colors } from '../theme/colors'
 import { spacing } from '../theme/spacing'
 import { typography } from '../theme/typography'
-import { Allocation } from '../types'
+import { Allocation, Site } from '../types'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AllocationPlan'>
 
+/** Map a 0–1 priority score to a colour band. */
+function priorityColor(score: number): string {
+	if (score >= 0.75) return colors.urgencyCritical
+	if (score >= 0.5) return colors.urgencyHigh
+	if (score >= 0.25) return colors.urgencyMedium
+	return colors.urgencyLow
+}
+
+/** Map a 0–1 priority score to a human label. */
+function priorityLabel(score: number): string {
+	if (score >= 0.75) return 'Critical'
+	if (score >= 0.5) return 'High'
+	if (score >= 0.25) return 'Medium'
+	return 'Low'
+}
+
+// ── Allocation row ────────────────────────────────────────────────────────────
+
 function AllocationRow({
 	item,
+	site,
 	onDispatch,
 	isDispatching,
 }: {
 	item: Allocation
+	site: Site | undefined
 	onDispatch: (item: Allocation) => void
 	isDispatching: boolean
 }) {
@@ -46,62 +66,131 @@ function AllocationRow({
 
 	useEffect(() => {
 		if (isChanged) {
-			highlight.value = withDelay(200, withTiming(0, { duration: 1200 }))
+			highlight.value = withDelay(200, withTiming(0, { duration: 1400 }))
 		}
-	}, [isChanged])
+	}, [isChanged, highlight])
 
 	const animatedStyle = useAnimatedStyle(() => ({
-		backgroundColor: `rgba(251, 192, 45, ${highlight.value * 0.35})`, // amber highlight fade
+		backgroundColor: `rgba(249, 168, 37, ${highlight.value * 0.28})`,
 	}))
 
 	const [expanded, setExpanded] = React.useState(false)
 
+	const pColor = priorityColor(item.priority_score)
+	const pLabel = priorityLabel(item.priority_score)
+	const locationName = site?.location_name ?? `Site #${item.site_id}`
+
 	return (
 		<Animated.View style={[styles.row, animatedStyle]}>
-			<TouchableOpacity
-				style={styles.rowHeader}
-				onPress={() => setExpanded((v) => !v)}
-				accessibilityRole="button"
-				accessibilityLabel={`Allocation rank ${item.rank}, site ID ${item.site_id}`}
-			>
-				<Text style={styles.rank}>{item.rank}</Text>
-				<View style={styles.rowInfo}>
-					<Text style={styles.rowTitle}>Site #{item.site_id}</Text>
-					<Text style={styles.rowScore}>
-						Score: {(item.priority_score * 100).toFixed(0)}
-					</Text>
-					<Text style={styles.rowResources} numberOfLines={1}>
-						{item.resources
-							.map((r) => `${r.quantity}× ${r.resource_type}`)
-							.join(', ')}
-					</Text>
-				</View>
-				<TouchableOpacity
-					style={[
-						styles.dispatchButton,
-						isDispatching && styles.dispatchButtonDisabled,
-					]}
-					onPress={() => onDispatch(item)}
-					disabled={isDispatching}
-					accessibilityRole="button"
-					accessibilityLabel={`Confirm dispatch for site ${item.site_id}`}
-				>
-					{isDispatching ? (
-						<ActivityIndicator color={colors.white} size="small" />
-					) : (
-						<Text style={styles.dispatchButtonText}>Dispatch</Text>
-					)}
-				</TouchableOpacity>
-			</TouchableOpacity>
+			{/* Priority colour strip on left edge */}
+			<View style={[styles.priorityStrip, { backgroundColor: pColor }]} />
 
-			{expanded && (
-				<View style={styles.reasoning}>
-					<Text style={styles.reasoningText}>{item.reasoning}</Text>
+			<View style={styles.rowInner}>
+				{/* Header row */}
+				<TouchableOpacity
+					style={styles.rowHeader}
+					onPress={() => setExpanded((v) => !v)}
+					accessibilityRole="button"
+					accessibilityLabel={`Rank ${item.rank}: ${locationName}. Priority ${pLabel}. Tap to ${expanded ? 'collapse' : 'expand'} reasoning.`}
+					activeOpacity={0.7}
+				>
+					{/* Rank badge */}
+					<View style={styles.rankBadge}>
+						<Text style={styles.rankText}>{item.rank}</Text>
+					</View>
+
+					{/* Site info */}
+					<View style={styles.rowInfo}>
+						<Text style={styles.rowTitle} numberOfLines={1}>
+							{locationName}
+						</Text>
+						<View style={styles.rowMeta}>
+							{/* Priority pill */}
+							<View
+								style={[
+									styles.priorityPill,
+									{
+										backgroundColor: pColor + '22',
+										borderColor: pColor,
+									},
+								]}
+							>
+								<View
+									style={[
+										styles.priorityDot,
+										{ backgroundColor: pColor },
+									]}
+								/>
+								<Text
+									style={[
+										styles.priorityPillText,
+										{ color: pColor },
+									]}
+								>
+									{pLabel}
+								</Text>
+							</View>
+							{/* Resource summary */}
+							<Text
+								style={styles.resourceSummary}
+								numberOfLines={1}
+							>
+								{item.resources
+									.map(
+										(r) =>
+											`${r.quantity}× ${r.resource_type}`
+									)
+									.join(', ')}
+							</Text>
+						</View>
+					</View>
+
+					{/* Expand indicator */}
+					<Text style={styles.expandIndicator}>
+						{expanded ? '▲' : '▼'}
+					</Text>
+				</TouchableOpacity>
+
+				{/* Expanded reasoning */}
+				{expanded && (
+					<View style={styles.reasoning}>
+						<Text style={styles.reasoningLabel}>AI Reasoning</Text>
+						<Text style={styles.reasoningText}>
+							{item.reasoning}
+						</Text>
+					</View>
+				)}
+
+				{/* Dispatch button */}
+				<View style={styles.rowFooter}>
+					<TouchableOpacity
+						style={[
+							styles.dispatchButton,
+							isDispatching && styles.dispatchButtonDisabled,
+						]}
+						onPress={() => onDispatch(item)}
+						disabled={isDispatching}
+						accessibilityRole="button"
+						accessibilityLabel={`Confirm dispatch to ${locationName}`}
+					>
+						{isDispatching ? (
+							<ActivityIndicator
+								color={colors.white}
+								size="small"
+							/>
+						) : (
+							<Text style={styles.dispatchButtonText}>
+								Confirm Dispatch →
+							</Text>
+						)}
+					</TouchableOpacity>
 				</View>
-			)}
+			</View>
 		</Animated.View>
 	)
 }
+
+// ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function AllocationPlanScreen({ navigation }: Props) {
 	const generateMutation = useGeneratePlan()
@@ -116,11 +205,10 @@ export default function AllocationPlanScreen({ navigation }: Props) {
 		null
 	)
 
-	// Load plan on mount
 	useEffect(() => {
 		generateMutation.mutate()
-		return () => clearReplanChangedSiteIds() // clear highlights on unmount
-	}, [])
+		return () => clearReplanChangedSiteIds()
+	}, [clearReplanChangedSiteIds, generateMutation])
 
 	const handleDispatch = useCallback(
 		async (item: Allocation) => {
@@ -131,27 +219,34 @@ export default function AllocationPlanScreen({ navigation }: Props) {
 					depot_id: item.depot_id,
 					resources: item.resources,
 				})
-				// Find the matching site and depot so DispatchDetail can show markers
 				const site = sites.data?.find((s) => s.id === item.site_id)
 				const depot = depots.data?.find((d) => d.id === item.depot_id)
 				if (!site || !depot) {
-					// Data not loaded yet — navigate without markers rather than block
 					Alert.alert(
-						'Warning',
-						'Site or depot data not yet loaded. Route will display without markers.'
+						'Heads Up',
+						'Site or depot details not fully loaded — route map may not show markers.'
 					)
 				}
 				navigation.navigate('DispatchDetail', {
 					dispatch: result,
 					site: site!,
 					depot: depot!,
+					resources: item.resources,
 				})
 			} catch (err: any) {
 				const detail = err?.response?.data?.detail
-				Alert.alert(
-					'Dispatch Failed',
-					detail ?? 'Unable to create dispatch.'
-				)
+				if (err?.response?.status === 409) {
+					Alert.alert(
+						'Insufficient Inventory',
+						detail ??
+							'One or more depots do not have enough resources for this dispatch.'
+					)
+				} else {
+					Alert.alert(
+						'Dispatch Failed',
+						detail ?? 'Unable to create dispatch. Please try again.'
+					)
+				}
 			} finally {
 				setDispatchingId(null)
 			}
@@ -161,34 +256,53 @@ export default function AllocationPlanScreen({ navigation }: Props) {
 
 	const handleReplan = () => {
 		replanMutation.mutate('new_report', {
+			onSuccess: (data) => {
+				const changedCount = data.changed.length
+				if (changedCount === 0) {
+					Alert.alert(
+						'Plan Unchanged',
+						'No changes — the current plan is already optimal.'
+					)
+				}
+			},
 			onError: (err: any) => {
 				Alert.alert(
 					'Replan Failed',
-					err?.response?.data?.detail ?? 'Unable to replan.'
+					err?.response?.data?.detail ??
+						'Unable to replan. Please try again.'
 				)
 			},
 		})
 	}
 
 	const allocations = generateMutation.data?.allocations ?? []
-	const isEmpty = generateMutation.data?.message === 'No unserved sites'
+	const isEmpty =
+		!generateMutation.isPending &&
+		(generateMutation.data?.message === 'No unserved sites' ||
+			allocations.length === 0)
 
-	if (generateMutation.isPending) return <LoadingSpinner />
+	if (generateMutation.isPending) {
+		return <LoadingSpinner />
+	}
 
 	return (
 		<SafeAreaView style={styles.container} edges={['bottom']}>
 			{generateMutation.isError && (
 				<ErrorInline
-					message="Failed to load plan"
+					message="Could not load the allocation plan."
 					onRetry={() => generateMutation.mutate()}
 				/>
 			)}
 
 			{isEmpty ? (
 				<View style={styles.emptyContainer}>
+					<View style={styles.emptyIcon}>
+						<View style={styles.emptyIconInner} />
+					</View>
 					<Text style={styles.emptyTitle}>All Clear</Text>
 					<Text style={styles.emptyBody}>
-						No unserved sites at this time.
+						There are no unserved sites requiring allocation at this
+						time.
 					</Text>
 				</View>
 			) : (
@@ -198,6 +312,9 @@ export default function AllocationPlanScreen({ navigation }: Props) {
 					renderItem={({ item }) => (
 						<AllocationRow
 							item={item}
+							site={sites.data?.find(
+								(s) => s.id === item.site_id
+							)}
 							onDispatch={handleDispatch}
 							isDispatching={dispatchingId === item.site_id}
 						/>
@@ -209,8 +326,14 @@ export default function AllocationPlanScreen({ navigation }: Props) {
 				/>
 			)}
 
-			{/* Replan button */}
+			{/* Replan footer */}
 			<View style={styles.footer}>
+				<View style={styles.footerInfo}>
+					<Text style={styles.footerCount}>
+						{allocations.length} site
+						{allocations.length !== 1 ? 's' : ''} in plan
+					</Text>
+				</View>
 				<TouchableOpacity
 					style={[
 						styles.replanButton,
@@ -219,12 +342,12 @@ export default function AllocationPlanScreen({ navigation }: Props) {
 					onPress={handleReplan}
 					disabled={replanMutation.isPending}
 					accessibilityRole="button"
-					accessibilityLabel="Replan allocations"
+					accessibilityLabel="Refresh and replan allocations"
 				>
 					{replanMutation.isPending ? (
-						<ActivityIndicator color={colors.white} />
+						<ActivityIndicator color={colors.white} size="small" />
 					) : (
-						<Text style={styles.replanButtonText}>Replan</Text>
+						<Text style={styles.replanButtonText}>↻ Replan</Text>
 					)}
 				</TouchableOpacity>
 			</View>
@@ -234,14 +357,29 @@ export default function AllocationPlanScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
 	container: { flex: 1, backgroundColor: colors.background },
-	list: { paddingHorizontal: spacing.lg, paddingVertical: spacing.base },
+
+	list: {
+		paddingHorizontal: spacing.lg,
+		paddingTop: spacing.base,
+		paddingBottom: spacing.sm,
+	},
 	separator: { height: spacing.sm },
+
+	// ── Row ───────────────────────────────────────────────────────────────────
 	row: {
+		flexDirection: 'row',
 		backgroundColor: colors.surface,
-		borderRadius: 10,
+		borderRadius: 12,
 		borderWidth: 1,
 		borderColor: colors.border,
 		overflow: 'hidden',
+	},
+	priorityStrip: {
+		width: 5,
+		alignSelf: 'stretch',
+	},
+	rowInner: {
+		flex: 1,
 	},
 	rowHeader: {
 		flexDirection: 'row',
@@ -249,69 +387,180 @@ const styles = StyleSheet.create({
 		padding: spacing.base,
 		gap: spacing.base,
 	},
-	rank: {
-		...typography.heading,
-		color: colors.primary,
-		width: 32,
-		textAlign: 'center',
-	},
-	rowInfo: { flex: 1 },
-	rowTitle: { ...typography.bodyBold },
-	rowScore: { ...typography.caption },
-	rowResources: { ...typography.caption, color: colors.textSecondary },
-	dispatchButton: {
-		backgroundColor: colors.primary,
-		borderRadius: 6,
-		paddingHorizontal: spacing.base,
+
+	// Rank badge
+	rankBadge: {
+		width: 36,
 		height: 36,
-		minWidth: 80,
+		borderRadius: 18,
+		backgroundColor: colors.primaryLight,
+		borderWidth: 1.5,
+		borderColor: colors.primary,
 		alignItems: 'center',
 		justifyContent: 'center',
+		flexShrink: 0,
 	},
-	dispatchButtonDisabled: { opacity: 0.5 },
-	dispatchButtonText: { ...typography.captionBold, color: colors.white },
+	rankText: {
+		...typography.captionBold,
+		color: colors.primary,
+		fontSize: 15,
+	},
+
+	// Info
+	rowInfo: { flex: 1, gap: 4 },
+	rowTitle: {
+		...typography.bodyBold,
+		color: colors.textPrimary,
+	},
+	rowMeta: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.sm,
+		flexWrap: 'wrap',
+	},
+
+	// Priority pill
+	priorityPill: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		borderRadius: 8,
+		borderWidth: 1,
+		paddingHorizontal: spacing.sm,
+		paddingVertical: 2,
+		gap: 4,
+	},
+	priorityDot: {
+		width: 6,
+		height: 6,
+		borderRadius: 3,
+	},
+	priorityPillText: {
+		fontSize: 11,
+		fontWeight: '700',
+		letterSpacing: 0.2,
+	},
+
+	resourceSummary: {
+		...typography.caption,
+		color: colors.textSecondary,
+		flex: 1,
+	},
+
+	expandIndicator: {
+		...typography.caption,
+		color: colors.gray400,
+		flexShrink: 0,
+	},
+
+	// Reasoning
 	reasoning: {
-		paddingHorizontal: spacing.base,
-		paddingBottom: spacing.base,
-		borderTopWidth: 1,
-		borderTopColor: colors.border,
-		backgroundColor: colors.gray100,
+		marginHorizontal: spacing.base,
+		marginBottom: spacing.base,
+		backgroundColor: colors.aiSuggested,
+		borderRadius: 8,
+		padding: spacing.base,
+		borderLeftWidth: 3,
+		borderLeftColor: colors.aiSuggestedBorder,
+	},
+	reasoningLabel: {
+		...typography.captionBold,
+		color: colors.aiSuggestedBorder,
+		marginBottom: spacing.xs,
+		textTransform: 'uppercase',
+		letterSpacing: 0.5,
 	},
 	reasoningText: {
 		...typography.caption,
-		fontStyle: 'italic',
-		marginTop: spacing.sm,
+		color: colors.textPrimary,
+		lineHeight: 20,
 	},
+
+	// Dispatch button
+	rowFooter: {
+		paddingHorizontal: spacing.base,
+		paddingBottom: spacing.base,
+	},
+	dispatchButton: {
+		backgroundColor: colors.primary,
+		borderRadius: 8,
+		height: 42,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	dispatchButtonDisabled: { opacity: 0.45 },
+	dispatchButtonText: {
+		...typography.captionBold,
+		color: colors.white,
+		fontSize: 14,
+	},
+
+	// ── Empty ──────────────────────────────────────────────────────────────────
 	emptyContainer: {
 		flex: 1,
 		alignItems: 'center',
 		justifyContent: 'center',
-		padding: spacing.lg,
+		paddingHorizontal: spacing.xl,
+	},
+	emptyIcon: {
+		width: 72,
+		height: 72,
+		borderRadius: 36,
+		borderWidth: 2.5,
+		borderColor: colors.secondary,
+		alignItems: 'center',
+		justifyContent: 'center',
+		marginBottom: spacing.xl,
+	},
+	emptyIconInner: {
+		width: 28,
+		height: 28,
+		borderRadius: 14,
+		backgroundColor: colors.secondary,
+		opacity: 0.55,
 	},
 	emptyTitle: {
 		...typography.heading,
-		color: colors.success,
+		color: colors.primaryDark,
 		marginBottom: spacing.sm,
 	},
 	emptyBody: {
 		...typography.body,
 		color: colors.textSecondary,
 		textAlign: 'center',
+		lineHeight: 24,
 	},
+
+	// ── Footer ────────────────────────────────────────────────────────────────
 	footer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
 		paddingHorizontal: spacing.lg,
 		paddingVertical: spacing.base,
 		borderTopWidth: 1,
 		borderTopColor: colors.border,
 		backgroundColor: colors.surface,
 	},
+	footerInfo: {},
+	footerCount: {
+		...typography.caption,
+		color: colors.textSecondary,
+	},
 	replanButton: {
 		backgroundColor: colors.primaryDark,
 		borderRadius: 8,
-		height: 48,
+		paddingHorizontal: spacing.lg,
+		height: 42,
 		alignItems: 'center',
 		justifyContent: 'center',
+		flexDirection: 'row',
+		gap: spacing.xs,
+		minWidth: 110,
 	},
-	replanButtonDisabled: { opacity: 0.5 },
-	replanButtonText: { ...typography.bodyBold, color: colors.white },
+	replanButtonDisabled: { opacity: 0.45 },
+	replanButtonText: {
+		...typography.captionBold,
+		color: colors.white,
+		fontSize: 14,
+	},
 })

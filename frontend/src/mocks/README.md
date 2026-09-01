@@ -7,7 +7,7 @@ entire API layer.
 
 ## How it works
 
-```
+```bash
 app/_layout.tsx
   └─ if EXPO_PUBLIC_USE_MOCK === 'true'
        └─ setupMocks()          ← src/mocks/index.ts
@@ -25,7 +25,7 @@ requires only changing the env flag.
 
 In `frontend/.env`:
 
-```
+```bash
 EXPO_PUBLIC_USE_MOCK=true   # all requests handled locally
 EXPO_PUBLIC_USE_MOCK=false  # requests go to EXPO_PUBLIC_API_BASE_URL
 ```
@@ -35,7 +35,7 @@ EXPO_PUBLIC_USE_MOCK=false  # requests go to EXPO_PUBLIC_API_BASE_URL
 
 ## File structure
 
-```
+```bash
 src/mocks/
   index.ts            ← central handler; call setupMocks() once at boot
   auth.mock.ts        ← LoginResponse, Center[]

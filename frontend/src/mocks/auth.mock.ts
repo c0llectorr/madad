@@ -30,7 +30,7 @@ export const mockCenters: Center[] = [
 		code: 'MZF-01',
 		name: 'Muzaffargarh Support Center',
 		region: 'Punjab',
-		lat: 30.0750,
-		lng: 71.1800,
+		lat: 30.075,
+		lng: 71.18,
 	},
 ]
